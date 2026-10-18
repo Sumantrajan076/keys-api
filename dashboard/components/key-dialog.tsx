@@ -50,7 +50,8 @@ export function KeyDialog({ provider, existing, onClose, onSaved }: {
           <DialogHeader>
             <DialogTitle>{existing ? `Edit ${existing.name}` : `Add ${provider.label} key`}</DialogTitle>
             <DialogDescription>
-              Status is not set here — a bot moves it with <code className="font-mono">PATCH /api/{provider.slug}/&lt;id&gt;</code>.
+              Saving returns this key to working status and clears its cached access token. A bot can flag it again with{" "}
+              <code className="font-mono">PATCH /api/{provider.slug}/&lt;id&gt;</code>.
             </DialogDescription>
           </DialogHeader>
 

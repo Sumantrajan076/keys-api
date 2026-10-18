@@ -329,6 +329,59 @@ describe("dashboard CRUD", () => {
     expect((await adm(`/api/admin/keys/${key.id}`, { method: "DELETE" })).status).toBe(404);
   });
 
+  test("editing a flagged key reactivates it and clears cached access-token data", async () => {
+    const cachedSecrets = {
+      arl: "repair-me",
+      access_token: "stale-access-token",
+      access_token_expires_at: "2026-01-01T00:00:00.000Z",
+      token_type: "Bearer",
+    };
+    const created = await adm(`/api/admin/providers/${P}/keys`, {
+      method: "POST",
+      body: JSON.stringify({ name: "dashboard-reactivate", secrets: cachedSecrets }),
+    });
+    const { key } = await created.json();
+
+    await bot(`/api/${P}/${key.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "flagged", reason: "expired" }),
+    });
+
+    // The UI resubmits all its secret fields, including cache values it doesn't display.
+    const edited = await adm(`/api/admin/keys/${key.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ note: "repaired", secrets: cachedSecrets }),
+    });
+    expect(edited.status).toBe(200);
+    const { key: updated } = await edited.json();
+    expect(updated).toMatchObject({ status: "working", note: "repaired" });
+    expect(updated.secrets).toEqual({ arl: "repair-me" });
+    expect(row(key.id)).toMatchObject({ status: "working", flagged_at: null, flag_reason: null, fail_count: 1 });
+  });
+
+  test("editing a key without resubmitting secrets also clears cached access-token data", async () => {
+    const created = await adm(`/api/admin/providers/${P}/keys`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: "dashboard-clear-cache",
+        secrets: {
+          arl: "current",
+          access_token: "stale-access-token",
+          access_token_expires_at: "2026-01-01T00:00:00.000Z",
+          token_type: "Bearer",
+        },
+      }),
+    });
+    const { key } = await created.json();
+
+    const edited = await adm(`/api/admin/keys/${key.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ note: "updated" }),
+    });
+    expect(edited.status).toBe(200);
+    expect((await edited.json()).key.secrets).toEqual({ arl: "current" });
+  });
+
   test("rejects a key with no name or no secrets", async () => {
     const noName = await adm(`/api/admin/providers/${P}/keys`, {
       method: "POST",

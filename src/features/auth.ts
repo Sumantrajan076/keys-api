@@ -124,7 +124,9 @@ export class Auth {
     if (!current || current.resetAt < now) {
       this.attempts.set(ip, { n: 1, resetAt: now + WINDOW_MS });
       if (this.attempts.size > 1000)
-        for (const [k, v] of this.attempts) if (v.resetAt < now) this.attempts.delete(k);
+        this.attempts.forEach((attempt, key) => {
+          if (attempt.resetAt < now) this.attempts.delete(key);
+        });
       return false;
     }
     current.n += 1;

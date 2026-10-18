@@ -60,7 +60,7 @@ uses everything under `/api/admin`:
 | `GET POST /api/admin/providers` | List, add |
 | `PATCH DELETE /api/admin/providers/:slug` | Relabel, change fields, enable/disable, delete (takes its keys with it) |
 | `GET POST /api/admin/providers/:slug/keys` | List, add |
-| `PATCH DELETE /api/admin/keys/:id` | Edit secrets, note, status |
+| `PATCH DELETE /api/admin/keys/:id` | Edit secrets, note, status; omitting status returns an edited key to `working` |
 | `GET POST /api/admin/tokens` | List, mint a bot token |
 | `DELETE /api/admin/tokens/:id` | Revoke |
 
